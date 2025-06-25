@@ -1,0 +1,188 @@
+"""
+文档服务 - 负责读取和管理Obsidian文档
+"""
+
+import os
+import re
+import frontmatter
+import markdown
+from datetime import datetime
+from typing import List, Dict, Optional
+from flask import current_app
+
+class DocumentService:
+    """文档服务类"""
+    
+    def __init__(self):
+        self.vault_path = current_app.config.get('OBSIDIAN_VAULT_PATH', './docs')
+        self.md_extensions = ['.md', '.markdown']
+        
+    def get_all_documents(self) -> List[Dict]:
+        """获取所有文档"""
+        documents = []
+        
+        if not os.path.exists(self.vault_path):
+            current_app.logger.warning(f"文档库路径不存在: {self.vault_path}")
+            return documents
+        
+        for root, dirs, files in os.walk(self.vault_path):
+            # 跳过隐藏目录
+            dirs[:] = [d for d in dirs if not d.startswith('.')]
+            
+            for file in files:
+                if any(file.endswith(ext) for ext in self.md_extensions):
+                    file_path = os.path.join(root, file)
+                    relative_path = os.path.relpath(file_path, self.vault_path)
+                    
+                    try:
+                        document = self._parse_document(file_path, relative_path)
+                        if document:
+                            documents.append(document)
+                    except Exception as e:
+                        current_app.logger.error(f"解析文档失败 {file_path}: {str(e)}")
+        
+        # 按修改时间排序
+        documents.sort(key=lambda x: x.get('modified_time', ''), reverse=True)
+        return documents
+    
+    def get_document(self, doc_path: str) -> Optional[Dict]:
+        """获取单个文档"""
+        full_path = os.path.join(self.vault_path, doc_path)
+        
+        if not os.path.exists(full_path):
+            return None
+        
+        try:
+            return self._parse_document(full_path, doc_path)
+        except Exception as e:
+            current_app.logger.error(f"解析文档失败 {full_path}: {str(e)}")
+            return None
+    
+    def search_documents(self, query: str) -> List[Dict]:
+        """搜索文档"""
+        all_docs = self.get_all_documents()
+        results = []
+        
+        query_lower = query.lower()
+        
+        for doc in all_docs:
+            # 搜索标题
+            if query_lower in doc.get('title', '').lower():
+                results.append(doc)
+                continue
+            
+            # 搜索内容
+            if query_lower in doc.get('content', '').lower():
+                results.append(doc)
+                continue
+            
+            # 搜索标签
+            tags = doc.get('tags', [])
+            if any(query_lower in tag.lower() for tag in tags):
+                results.append(doc)
+                continue
+        
+        return results
+    
+    def _parse_document(self, file_path: str, relative_path: str) -> Optional[Dict]:
+        """解析单个文档"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # 解析frontmatter
+            post = frontmatter.loads(content)
+            metadata = dict(post.metadata) if post.metadata else {}
+            
+            # 获取文件信息
+            stat = os.stat(file_path)
+            
+            # 提取标题
+            title = metadata.get('title', '')
+            if not title:
+                # 从文件名提取标题
+                title = os.path.splitext(os.path.basename(file_path))[0]
+                title = title.replace('-', ' ').replace('_', ' ').title()
+            
+            # 提取标签
+            tags = metadata.get('tags', [])
+            if isinstance(tags, str):
+                tags = [tags]
+            
+            # 转换Markdown为HTML
+            html_content = markdown.markdown(
+                post.content,
+                extensions=['fenced_code', 'tables', 'toc', 'codehilite']
+            )
+            
+            # 提取链接
+            links = self._extract_links(post.content)
+            
+            # 提取图片
+            images = self._extract_images(post.content)
+            
+            document = {
+                'file_path': relative_path,
+                'title': title,
+                'content': post.content,
+                'html_content': html_content,
+                'metadata': metadata,
+                'tags': tags,
+                'links': links,
+                'images': images,
+                'created_time': datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                'modified_time': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                'size': stat.st_size,
+                'word_count': len(post.content.split()),
+                'line_count': len(post.content.splitlines())
+            }
+            
+            return document
+            
+        except Exception as e:
+            current_app.logger.error(f"解析文档失败 {file_path}: {str(e)}")
+            return None
+    
+    def _extract_links(self, content: str) -> List[str]:
+        """提取文档中的链接"""
+        # Markdown链接模式
+        link_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
+        links = re.findall(link_pattern, content)
+        return [link[1] for link in links]
+    
+    def _extract_images(self, content: str) -> List[str]:
+        """提取文档中的图片"""
+        # Markdown图片模式
+        image_pattern = r'!\[([^\]]*)\]\(([^)]+)\)'
+        images = re.findall(image_pattern, content)
+        return [img[1] for img in images]
+    
+    def get_document_stats(self) -> Dict:
+        """获取文档统计信息"""
+        documents = self.get_all_documents()
+        
+        total_docs = len(documents)
+        total_words = sum(doc.get('word_count', 0) for doc in documents)
+        total_size = sum(doc.get('size', 0) for doc in documents)
+        
+        # 标签统计
+        tag_counts = {}
+        for doc in documents:
+            for tag in doc.get('tags', []):
+                tag_counts[tag] = tag_counts.get(tag, 0) + 1
+        
+        # 按月份统计
+        monthly_stats = {}
+        for doc in documents:
+            modified_time = doc.get('modified_time', '')
+            if modified_time:
+                month = modified_time[:7]  # YYYY-MM
+                monthly_stats[month] = monthly_stats.get(month, 0) + 1
+        
+        return {
+            'total_documents': total_docs,
+            'total_words': total_words,
+            'total_size': total_size,
+            'tag_counts': tag_counts,
+            'monthly_stats': monthly_stats
+        } 

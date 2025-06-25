@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}错误 - Obsidian文档展示系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="text-center">
+            <div class="mb-4">
+                <i class="fas fa-exclamation-triangle fa-5x text-warning"></i>
+            </div>
+            
+            <h1 class="display-4 mb-4">出错了！</h1>
+            
+            <div class="alert alert-danger">
+                <h5 class="alert-heading">
+                    <i class="fas fa-bug me-2"></i>错误信息
+                </h5>
+                <p class="mb-0">{{ error }}</p>
+            </div>
+            
+            <div class="mt-4">
+                <a href="{{ url_for('main.index') }}" class="btn btn-primary me-2">
+                    <i class="fas fa-home me-2"></i>返回首页
+                </a>
+                <a href="{{ url_for('main.docs_list') }}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-list me-2"></i>文档列表
+                </a>
+                <button onclick="history.back()" class="btn btn-outline-info">
+                    <i class="fas fa-arrow-left me-2"></i>返回上页
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

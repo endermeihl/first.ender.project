@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Virtualenv
+venv/
+.env/
+.env.*
+
+# Logs
+logs/
+*.log
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test/coverage
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints
+
+# Docker
+*.pid
+docker-compose.override.yml
+
+# Misc
+*.swp
+*.bak
+*.tmp
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# Markdown preview
+*.md.html
+
+# Gunicorn
+*.pid
+
+# Exclude env.example but not .env
+!env.example 

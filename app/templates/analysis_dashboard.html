@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}分析仪表板 - Obsidian文档展示系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-chart-bar me-3"></i>分析仪表板
+        </h1>
+    </div>
+</div>
+
+<!-- 统计卡片 -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stats-card">
+            <i class="fas fa-file-alt fa-2x mb-3"></i>
+            <h3>{{ stats.total_documents if stats else 0 }}</h3>
+            <p>总文档数</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <i class="fas fa-words fa-2x mb-3"></i>
+            <h3>{{ stats.total_words if stats else 0 }}</h3>
+            <p>总字数</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <i class="fas fa-chart-line fa-2x mb-3"></i>
+            <h3>{{ stats.average_readability if stats else 0 }}</h3>
+            <p>平均可读性</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <i class="fas fa-tags fa-2x mb-3"></i>
+            <h3>{{ stats.top_tags|length if stats and stats.top_tags else 0 }}</h3>
+            <p>活跃标签</p>
+        </div>
+    </div>
+</div>
+
+<!-- 图表区域 -->
+<div class="row">
+    <!-- 标签分布 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-pie-chart me-2"></i>标签分布
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="tagChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 月度趋势 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>月度文档趋势
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 详细统计 -->
+<div class="row">
+    <!-- 文档类型分布 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-folder me-2"></i>文档类型分布
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if stats and stats.document_types %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>类型</th>
+                                    <th>数量</th>
+                                    <th>占比</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc_type, count in stats.document_types.items() %}
+                                <tr>
+                                    <td>{{ doc_type }}</td>
+                                    <td>{{ count }}</td>
+                                    <td>{{ "%.1f"|format(count / stats.total_documents * 100) }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">暂无数据</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 热门标签 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tags me-2"></i>热门标签
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if stats and stats.top_tags %}
+                    <div class="keyword-cloud">
+                        {% for tag, count in stats.top_tags.items() %}
+                        <div class="keyword-item">
+                            {{ tag }}
+                            <span class="keyword-count">{{ count }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">暂无标签数据</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 可读性分析 -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-brain me-2"></i>可读性分析
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4 class="text-success">{{ stats.average_readability if stats else 0 }}</h4>
+                            <p class="text-muted">平均可读性分数</p>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="progress mb-3">
+                            <div class="progress-bar bg-success" 
+                                 style="width: {{ (stats.average_readability / 100 * 100) if stats else 0 }}%">
+                                优秀
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            可读性分数范围：0-100，分数越高表示文档越易读
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 月度统计表格 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-table me-2"></i>月度统计详情
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if stats and stats.monthly_stats %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>月份</th>
+                                    <th>文档数量</th>
+                                    <th>占比</th>
+                                    <th>趋势</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for month, count in stats.monthly_stats.items() %}
+                                <tr>
+                                    <td>{{ month }}</td>
+                                    <td>{{ count }}</td>
+                                    <td>{{ "%.1f"|format(count / stats.total_documents * 100) }}%</td>
+                                    <td>
+                                        {% if count > 5 %}
+                                            <span class="badge bg-success">活跃</span>
+                                        {% elif count > 2 %}
+                                            <span class="badge bg-warning">一般</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">较少</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">暂无月度统计数据</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 加载统计数据
+    fetch('/api/statistics')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateDashboard(data.data);
+            }
+        })
+        .catch(error => console.error('加载统计数据失败:', error));
+    
+    function updateDashboard(stats) {
+        // 更新统计卡片
+        updateStatsCards(stats);
+        
+        // 更新图表
+        updateCharts(stats);
+    }
+    
+    function updateStatsCards(stats) {
+        // 这里可以通过JavaScript动态更新统计卡片
+        console.log('统计数据:', stats);
+    }
+    
+    function updateCharts(stats) {
+        // 标签分布图表
+        if (stats.top_tags && Object.keys(stats.top_tags).length > 0) {
+            const tagCtx = document.getElementById('tagChart').getContext('2d');
+            new Chart(tagCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(stats.top_tags),
+                    datasets: [{
+                        data: Object.values(stats.top_tags),
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                            '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 月度趋势图表
+        if (stats.monthly_stats && Object.keys(stats.monthly_stats).length > 0) {
+            const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+            new Chart(monthlyCtx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(stats.monthly_stats),
+                    datasets: [{
+                        label: '文档数量',
+                        data: Object.values(stats.monthly_stats),
+                        borderColor: '#36A2EB',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    }
+});
+</script>
+{% endblock %} 

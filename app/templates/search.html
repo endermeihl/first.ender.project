@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}搜索 - Obsidian文档展示系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="text-center mb-5">
+            <h1>
+                <i class="fas fa-search me-3"></i>搜索文档
+            </h1>
+            <p class="lead text-muted">在您的Obsidian文档库中搜索内容</p>
+        </div>
+        
+        <!-- 搜索框 -->
+        <div class="search-box">
+            <form action="{{ url_for('main.search') }}" method="get">
+                <div class="input-group input-group-lg">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" 
+                           class="form-control" 
+                           name="q" 
+                           placeholder="输入关键词搜索文档..."
+                           value="{{ request.args.get('q', '') }}"
+                           autofocus>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search me-2"></i>搜索
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 搜索提示 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>搜索提示
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>搜索范围</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>文档标题</li>
+                            <li><i class="fas fa-check text-success me-2"></i>文档内容</li>
+                            <li><i class="fas fa-check text-success me-2"></i>文档标签</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>搜索技巧</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-info text-info me-2"></i>支持中文搜索</li>
+                            <li><i class="fas fa-info text-info me-2"></i>不区分大小写</li>
+                            <li><i class="fas fa-info text-info me-2"></i>支持部分匹配</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 热门标签 -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tags me-2"></i>热门标签
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="tag-cloud">
+                    {% for tag in popular_tags %}
+                    <a href="{{ url_for('main.search', q=tag) }}" 
+                       class="badge bg-secondary text-decoration-none me-2 mb-2">
+                        {{ tag }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

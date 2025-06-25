@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}文档列表 - Obsidian文档展示系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-list me-2"></i>文档列表
+            </h1>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary" id="gridView">
+                    <i class="fas fa-th"></i>
+                </button>
+                <button type="button" class="btn btn-outline-primary active" id="listView">
+                    <i class="fas fa-list"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 筛选器 -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="fas fa-filter"></i>
+            </span>
+            <select class="form-select" id="tagFilter">
+                <option value="">所有标签</option>
+                {% for tag in tags %}
+                <option value="{{ tag }}">{{ tag }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="fas fa-sort"></i>
+            </span>
+            <select class="form-select" id="sortBy">
+                <option value="modified_time">按修改时间</option>
+                <option value="created_time">按创建时间</option>
+                <option value="title">按标题</option>
+                <option value="word_count">按字数</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- 文档列表 -->
+<div class="row" id="documentsContainer">
+    {% if documents %}
+        {% for doc in documents %}
+        <div class="col-lg-6 col-xl-4 mb-4 document-item" 
+             data-tags="{{ doc.tags|join(',') }}"
+             data-modified="{{ doc.modified_time }}"
+             data-created="{{ doc.created_time }}"
+             data-title="{{ doc.title }}"
+             data-words="{{ doc.word_count }}">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a href="{{ url_for('main.doc_detail', doc_path=doc.file_path) }}" 
+                           class="text-decoration-none">
+                            {{ doc.title }}
+                        </a>
+                    </h5>
+                    <p class="card-text text-muted small">
+                        {{ doc.content[:150] }}{% if doc.content|length > 150 %}...{% endif %}
+                    </p>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>
+                            {{ doc.modified_time[:10] }}
+                        </small>
+                        <small class="text-muted">
+                            <i class="fas fa-words me-1"></i>
+                            {{ doc.word_count }} 字
+                        </small>
+                    </div>
+                    
+                    {% if doc.tags %}
+                    <div class="mt-2">
+                        {% for tag in doc.tags[:3] %}
+                        <span class="badge bg-secondary me-1">{{ tag }}</span>
+                        {% endfor %}
+                        {% if doc.tags|length > 3 %}
+                        <span class="badge bg-light text-dark">+{{ doc.tags|length - 3 }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">
+                            <i class="fas fa-file-alt me-1"></i>
+                            {{ doc.file_path }}
+                        </small>
+                        <a href="{{ url_for('main.doc_detail', doc_path=doc.file_path) }}" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>查看
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                <h4>暂无文档</h4>
+                <p>请确保您的Obsidian文档库路径配置正确，并且包含Markdown文件。</p>
+                <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                    <i class="fas fa-home me-2"></i>返回首页
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- 分页 -->
+{% if documents and documents|length > 12 %}
+<div class="row mt-4">
+    <div class="col-12">
+        <nav aria-label="文档分页">
+            <ul class="pagination justify-content-center">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">上一页</a>
+                </li>
+                <li class="page-item active">
+                    <a class="page-link" href="#">1</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="#">2</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="#">3</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="#">下一页</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 视图切换
+    const gridView = document.getElementById('gridView');
+    const listView = document.getElementById('listView');
+    const container = document.getElementById('documentsContainer');
+    
+    gridView.addEventListener('click', function() {
+        container.className = 'row';
+        gridView.classList.add('active');
+        listView.classList.remove('active');
+    });
+    
+    listView.addEventListener('click', function() {
+        container.className = 'row';
+        document.querySelectorAll('.document-item').forEach(item => {
+            item.className = 'col-12 mb-3 document-item';
+        });
+        listView.classList.add('active');
+        gridView.classList.remove('active');
+    });
+    
+    // 标签筛选
+    const tagFilter = document.getElementById('tagFilter');
+    tagFilter.addEventListener('change', function() {
+        const selectedTag = this.value;
+        const items = document.querySelectorAll('.document-item');
+        
+        items.forEach(item => {
+            const tags = item.dataset.tags.split(',');
+            if (!selectedTag || tags.includes(selectedTag)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+    
+    // 排序
+    const sortBy = document.getElementById('sortBy');
+    sortBy.addEventListener('change', function() {
+        const sortField = this.value;
+        const items = Array.from(document.querySelectorAll('.document-item'));
+        
+        items.sort((a, b) => {
+            const aValue = a.dataset[sortField];
+            const bValue = b.dataset[sortField];
+            
+            if (sortField === 'title') {
+                return aValue.localeCompare(bValue);
+            } else if (sortField === 'word_count') {
+                return parseInt(bValue) - parseInt(aValue);
+            } else {
+                return bValue.localeCompare(aValue);
+            }
+        });
+        
+        const container = document.getElementById('documentsContainer');
+        items.forEach(item => container.appendChild(item));
+    });
+});
+</script>
+{% endblock %} 

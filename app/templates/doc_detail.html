@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}{{ document.title }} - Obsidian文档展示系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 文档内容 -->
+    <div class="col-lg-8">
+        <div class="document-content">
+            <h1 class="mb-4">{{ document.title }}</h1>
+            
+            <!-- 文档元信息 -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>
+                            修改时间: {{ document.modified_time[:10] }}
+                        </small>
+                    </div>
+                    <div>
+                        <small class="text-muted">
+                            <i class="fas fa-words me-1"></i>
+                            {{ document.word_count }} 字
+                        </small>
+                    </div>
+                </div>
+                
+                {% if document.tags %}
+                <div class="mt-2">
+                    {% for tag in document.tags %}
+                    <span class="badge bg-secondary me-1">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- 文档内容 -->
+            <div class="document-body">
+                {{ document.html_content|safe }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 侧边栏 -->
+    <div class="col-lg-4">
+        <!-- 文档信息 -->
+        <div class="document-meta mb-4">
+            <!-- 这里会通过JavaScript填充 -->
+        </div>
+        
+        <!-- 分析结果 -->
+        <div class="analysis-results">
+            <!-- 这里会通过JavaScript填充 -->
+        </div>
+        
+        <!-- 相关文档 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-link me-2"></i>相关文档
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if document.links %}
+                    <div class="list-group list-group-flush">
+                        {% for link in document.links[:5] %}
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <i class="fas fa-external-link-alt me-2"></i>
+                            {{ link }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">暂无相关链接</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 分析详情模态框 -->
+<div class="modal fade" id="analysisModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-bar me-2"></i>详细分析
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detailedAnalysis">
+                    <!-- 详细分析内容 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 获取当前文档路径
+    const docPath = '{{ document.file_path }}';
+    
+    // 加载文档分析
+    if (docPath) {
+        fetch(`/api/documents/${encodeURIComponent(docPath)}/analysis`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayAnalysis(data.data);
+                }
+            })
+            .catch(error => console.error('加载分析失败:', error));
+    }
+    
+    // 显示分析结果
+    function displayAnalysis(analysis) {
+        const container = document.querySelector('.analysis-results');
+        if (!container) return;
+        
+        const analysisHtml = `
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-brain me-2"></i>文档分析
+                        <button class="btn btn-sm btn-outline-primary float-end" 
+                                data-bs-toggle="modal" data-bs-target="#analysisModal">
+                            <i class="fas fa-expand me-1"></i>详细
+                        </button>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <p><strong>字数:</strong> ${analysis.basic_stats.word_count}</p>
+                            <p><strong>句子:</strong> ${analysis.basic_stats.sentence_count}</p>
+                        </div>
+                        <div class="col-6">
+                            <p><strong>段落:</strong> ${analysis.basic_stats.paragraph_count}</p>
+                            <p><strong>可读性:</strong> ${analysis.readability.flesch_reading_ease?.toFixed(1) || 'N/A'}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <strong>关键词:</strong>
+                        <div class="keyword-cloud">
+                            ${analysis.keywords.slice(0, 5).map(kw => 
+                                `<span class="badge bg-primary me-1">${kw.word}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <strong>情感倾向:</strong>
+                        <span class="badge bg-${getSentimentColor(analysis.sentiment.sentiment_label)}">
+                            ${analysis.sentiment.sentiment_label}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = analysisHtml;
+        
+        // 填充详细分析模态框
+        fillDetailedAnalysis(analysis);
+    }
+    
+    function getSentimentColor(label) {
+        switch(label) {
+            case '积极': return 'success';
+            case '消极': return 'danger';
+            default: return 'secondary';
+        }
+    }
+    
+    function fillDetailedAnalysis(analysis) {
+        const container = document.getElementById('detailedAnalysis');
+        if (!container) return;
+        
+        const detailedHtml = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>基础统计</h6>
+                    <table class="table table-sm">
+                        <tr><td>字数</td><td>${analysis.basic_stats.word_count}</td></tr>
+                        <tr><td>句子数</td><td>${analysis.basic_stats.sentence_count}</td></tr>
+                        <tr><td>段落数</td><td>${analysis.basic_stats.paragraph_count}</td></tr>
+                        <tr><td>字符数</td><td>${analysis.basic_stats.character_count}</td></tr>
+                        <tr><td>平均句长</td><td>${analysis.basic_stats.average_sentence_length.toFixed(1)}</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6>可读性分析</h6>
+                    <table class="table table-sm">
+                        <tr><td>Flesch可读性</td><td>${analysis.readability.flesch_reading_ease?.toFixed(1) || 'N/A'}</td></tr>
+                        <tr><td>Flesch-Kincaid等级</td><td>${analysis.readability.flesch_kincaid_grade?.toFixed(1) || 'N/A'}</td></tr>
+                        <tr><td>Gunning Fog指数</td><td>${analysis.readability.gunning_fog?.toFixed(1) || 'N/A'}</td></tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6>关键词 (前10个)</h6>
+                    <div class="keyword-cloud">
+                        ${analysis.keywords.map(kw => 
+                            `<span class="badge bg-primary me-1 mb-1">${kw.word} (${kw.count})</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6>文档摘要</h6>
+                    <p class="lead">${analysis.summary}</p>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = detailedHtml;
+    }
+});
+</script>
+{% endblock %} 

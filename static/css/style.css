@@ -1,0 +1,322 @@
+/* Obsidian文档展示系统 - 自定义样式 */
+
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+}
+
+/* 全局样式 */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+}
+
+/* 导航栏样式 */
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+/* 卡片样式 */
+.card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.card-header {
+    background-color: var(--light-color);
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+}
+
+/* 文档内容样式 */
+.document-content {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.document-content h1,
+.document-content h2,
+.document-content h3,
+.document-content h4,
+.document-content h5,
+.document-content h6 {
+    color: var(--dark-color);
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.document-content h1 {
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+}
+
+.document-content p {
+    margin-bottom: 1rem;
+    line-height: 1.8;
+}
+
+.document-content code {
+    background-color: #f8f9fa;
+    color: #e83e8c;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.document-content pre {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+.document-content pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+}
+
+.document-content blockquote {
+    border-left: 4px solid var(--primary-color);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.document-content ul,
+.document-content ol {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
+
+.document-content li {
+    margin-bottom: 0.5rem;
+}
+
+.document-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.document-content th,
+.document-content td {
+    border: 1px solid #dee2e6;
+    padding: 0.75rem;
+    text-align: left;
+}
+
+.document-content th {
+    background-color: var(--light-color);
+    font-weight: 600;
+}
+
+/* 标签样式 */
+.badge {
+    font-size: 0.8em;
+    padding: 0.4em 0.8em;
+}
+
+/* 统计卡片样式 */
+.stats-card {
+    text-align: center;
+    padding: 1.5rem;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.stats-card h3 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.stats-card p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+/* 分析面板样式 */
+.analysis-panel {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.analysis-panel h5 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+}
+
+/* 关键词云样式 */
+.keyword-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.keyword-item {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.keyword-count {
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+/* 搜索框样式 */
+.search-box {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.search-box input {
+    padding-left: 3rem;
+    border-radius: 25px;
+    border: 2px solid #e9ecef;
+    transition: border-color 0.3s ease;
+}
+
+.search-box input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+.search-box .search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .document-content {
+        padding: 1rem;
+    }
+    
+    .stats-card h3 {
+        font-size: 2rem;
+    }
+    
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+}
+
+/* 加载动画 */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #1a1a1a;
+        color: #e0e0e0;
+    }
+    
+    .card {
+        background-color: #2d2d2d;
+        color: #e0e0e0;
+    }
+    
+    .card-header {
+        background-color: #3d3d3d;
+        border-bottom-color: #4d4d4d;
+    }
+    
+    .document-content {
+        background-color: #2d2d2d;
+        color: #e0e0e0;
+    }
+    
+    .document-content code {
+        background-color: #3d3d3d;
+        color: #ff6b6b;
+    }
+    
+    .document-content pre {
+        background-color: #3d3d3d;
+        border-color: #4d4d4d;
+    }
+    
+    .document-content th {
+        background-color: #3d3d3d;
+    }
+    
+    .document-content th,
+    .document-content td {
+        border-color: #4d4d4d;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    .navbar,
+    .footer,
+    .btn,
+    .card-header {
+        display: none !important;
+    }
+    
+    .document-content {
+        box-shadow: none;
+        border: none;
+    }
+    
+    body {
+        background: white;
+        color: black;
+    }
+} 
