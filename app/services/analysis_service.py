@@ -72,24 +72,17 @@ class AnalysisService:
                 month = modified_time[:7]
                 monthly_stats[month] = monthly_stats.get(month, 0) + 1
         
-        # 平均可读性
-        readability_scores = []
-        for doc in documents:
-            analysis = self.analyze_document(doc)
-            readability = analysis.get('readability', {})
-            if readability.get('flesch_reading_ease'):
-                readability_scores.append(readability['flesch_reading_ease'])
-        
-        avg_readability = sum(readability_scores) / len(readability_scores) if readability_scores else 0
+        # 文档类型统计
+        doc_types = self._analyze_document_types(documents)
         
         return {
             'total_documents': total_docs,
             'total_words': total_words,
             'total_size': total_size,
-            'average_readability': round(avg_readability, 2),
+            'average_words_per_doc': round(total_words / total_docs, 2) if total_docs > 0 else 0,
             'top_tags': dict(tag_counts.most_common(10)),
             'monthly_stats': monthly_stats,
-            'document_types': self._analyze_document_types(documents)
+            'document_types': doc_types
         }
     
     def _get_basic_stats(self, content: str) -> Dict:

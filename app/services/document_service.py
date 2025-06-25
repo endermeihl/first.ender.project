@@ -90,9 +90,15 @@ class DocumentService:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # 解析frontmatter
-            post = frontmatter.loads(content)
-            metadata = dict(post.metadata) if post.metadata else {}
+            # 尝试解析frontmatter，如果失败则使用原始内容
+            try:
+                post = frontmatter.loads(content)
+                metadata = dict(post.metadata) if post.metadata else {}
+                markdown_content = post.content
+            except Exception as e:
+                current_app.logger.warning(f"Frontmatter解析失败，使用原始内容 {file_path}: {str(e)}")
+                metadata = {}
+                markdown_content = content
             
             # 获取文件信息
             stat = os.stat(file_path)
@@ -110,39 +116,43 @@ class DocumentService:
                 tags = [tags]
             
             # 转换Markdown为HTML
-            html_content = markdown.markdown(
-                post.content,
-                extensions=[
-                    'fenced_code',
-                    'tables', 
-                    'toc',
-                    'codehilite',
-                    'nl2br',
-                    'sane_lists'
-                ],
-                extension_configs={
-                    'codehilite': {
-                        'css_class': 'highlight',
-                        'use_pygments': True,
-                        'noclasses': True,
-                        'linenums': False
+            try:
+                html_content = markdown.markdown(
+                    markdown_content,
+                    extensions=[
+                        'fenced_code',
+                        'tables', 
+                        'toc',
+                        'codehilite',
+                        'nl2br',
+                        'sane_lists'
+                    ],
+                    extension_configs={
+                        'codehilite': {
+                            'css_class': 'highlight',
+                            'use_pygments': True,
+                            'noclasses': True,
+                            'linenums': False
+                        }
                     }
-                }
-            )
-            
-            # 后处理HTML，改进代码块显示
-            html_content = self._post_process_html(html_content)
+                )
+                
+                # 后处理HTML，改进代码块显示
+                html_content = self._post_process_html(html_content)
+            except Exception as e:
+                current_app.logger.warning(f"Markdown转换失败，使用原始内容 {file_path}: {str(e)}")
+                html_content = f'<pre>{markdown_content}</pre>'
             
             # 提取链接
-            links = self._extract_links(post.content)
+            links = self._extract_links(markdown_content)
             
             # 提取图片
-            images = self._extract_images(post.content)
+            images = self._extract_images(markdown_content)
             
             document = {
                 'file_path': relative_path,
                 'title': title,
-                'content': post.content,
+                'content': markdown_content,
                 'html_content': html_content,
                 'metadata': metadata,
                 'tags': tags,
@@ -151,8 +161,8 @@ class DocumentService:
                 'created_time': datetime.fromtimestamp(stat.st_ctime).isoformat(),
                 'modified_time': datetime.fromtimestamp(stat.st_mtime).isoformat(),
                 'size': stat.st_size,
-                'word_count': len(post.content.split()),
-                'line_count': len(post.content.splitlines())
+                'word_count': len(markdown_content.split()),
+                'line_count': len(markdown_content.splitlines())
             }
             
             return document

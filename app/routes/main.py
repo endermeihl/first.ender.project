@@ -11,7 +11,20 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/')
 def index():
     """首页"""
-    return render_template('index.html')
+    try:
+        # 获取统计数据
+        analysis_service = AnalysisService()
+        stats = analysis_service.get_global_statistics()
+        
+        # 获取最近文档
+        doc_service = DocumentService()
+        documents = doc_service.get_all_documents()
+        recent_docs = documents[:5]  # 取前5个文档
+        
+        return render_template('index.html', stats=stats, recent_docs=recent_docs)
+    except Exception as e:
+        # 如果获取数据失败，使用默认值
+        return render_template('index.html', stats=None, recent_docs=[])
 
 @main_bp.route('/docs')
 def docs_list():

@@ -1,0 +1,18 @@
+{
+  "obsidian_vault_path": "D:\\BaiduSyncdisk\\文件快传\\ender\\ender",
+  "auto_refresh": true,
+  "refresh_interval": 30,
+  "max_file_size": 10485760,
+  "supported_extensions": [
+    ".md",
+    ".markdown"
+  ],
+  "exclude_patterns": [
+    ".git",
+    ".obsidian",
+    "node_modules",
+    "__pycache__"
+  ],
+  "theme": "light",
+  "language": "zh-CN"
+}

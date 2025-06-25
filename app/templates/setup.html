@@ -188,41 +188,34 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
 $(document).ready(function() {
     console.log('设置页面加载完成');
-    
-    // 加载当前状态
     loadStatus();
     
-    // 验证路径
     $('#validate-btn').click(function() {
         console.log('点击验证按钮');
         validatePath();
     });
     
-    // 初始化文档库
     $('#vault-form').submit(function(e) {
         e.preventDefault();
         console.log('提交初始化表单');
         initializeVault();
     });
     
-    // 强制刷新
     $('#refresh-btn').click(function() {
         console.log('点击强制刷新按钮');
         forceRefresh();
     });
     
-    // 高级设置
     $('#advanced-form').submit(function(e) {
         e.preventDefault();
         console.log('提交高级设置表单');
         saveAdvancedSettings();
     });
     
-    // 加载高级设置
     loadAdvancedSettings();
 });
 
@@ -314,7 +307,6 @@ function validatePath() {
     })
     .fail(function(xhr, status, error) {
         console.error('验证失败:', status, error);
-        console.error('响应内容:', xhr.responseText);
         hideLoading();
         showAlert('验证失败: ' + error, 'danger');
     });
@@ -349,7 +341,6 @@ function initializeVault() {
     })
     .fail(function(xhr, status, error) {
         console.error('初始化失败:', status, error);
-        console.error('响应内容:', xhr.responseText);
         hideLoading();
         showAlert('初始化失败: ' + error, 'danger');
     });
