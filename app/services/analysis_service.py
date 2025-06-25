@@ -11,22 +11,22 @@ from collections import Counter
 from typing import Dict, List, Optional
 from flask import current_app
 
-# 下载必要的NLTK数据
+# 初始化NLTK数据，如果下载失败则使用降级方案
+nltk_available = True
 try:
     nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
-
-try:
     nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('stopwords')
+    stop_words = set(nltk.corpus.stopwords.words('english'))
+except (LookupError, Exception) as e:
+    current_app.logger.warning(f"NLTK数据不可用，使用降级方案: {e}")
+    nltk_available = False
+    stop_words = set()
 
 class AnalysisService:
     """文档分析服务类"""
     
     def __init__(self):
-        self.stop_words = set(nltk.corpus.stopwords.words('english'))
+        self.stop_words = stop_words
         # 添加中文停用词
         self.stop_words.update(['的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一', '一个', '上', '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有', '看', '好', '自己', '这'])
     
@@ -95,7 +95,16 @@ class AnalysisService:
     def _get_basic_stats(self, content: str) -> Dict:
         """获取基础统计信息"""
         words = content.split()
-        sentences = nltk.sent_tokenize(content)
+        
+        # 使用NLTK或简单的句子分割
+        if nltk_available:
+            try:
+                sentences = nltk.sent_tokenize(content)
+            except:
+                sentences = self._simple_sentence_split(content)
+        else:
+            sentences = self._simple_sentence_split(content)
+        
         paragraphs = [p for p in content.split('\n\n') if p.strip()]
         
         return {
@@ -106,6 +115,13 @@ class AnalysisService:
             'average_sentence_length': len(words) / len(sentences) if sentences else 0,
             'average_paragraph_length': len(words) / len(paragraphs) if paragraphs else 0
         }
+    
+    def _simple_sentence_split(self, text: str) -> List[str]:
+        """简单的句子分割（降级方案）"""
+        # 使用常见的句子结束符分割
+        sentence_endings = r'[.!?。！？\n]+'
+        sentences = re.split(sentence_endings, text)
+        return [s.strip() for s in sentences if s.strip()]
     
     def _analyze_readability(self, content: str) -> Dict:
         """分析可读性"""
@@ -126,28 +142,32 @@ class AnalysisService:
     
     def _extract_keywords(self, content: str, top_n: int = 10) -> List[Dict]:
         """提取关键词"""
-        # 分词
-        words = jieba.cut(content)
-        
-        # 过滤停用词和短词
-        filtered_words = [
-            word for word in words 
-            if len(word) > 1 and word.lower() not in self.stop_words
-        ]
-        
-        # 统计词频
-        word_counts = Counter(filtered_words)
-        
-        # 返回前N个关键词
-        keywords = []
-        for word, count in word_counts.most_common(top_n):
-            keywords.append({
-                'word': word,
-                'count': count,
-                'frequency': count / len(filtered_words) if filtered_words else 0
-            })
-        
-        return keywords
+        try:
+            # 分词
+            words = jieba.cut(content)
+            
+            # 过滤停用词和短词
+            filtered_words = [
+                word for word in words 
+                if len(word) > 1 and word.lower() not in self.stop_words
+            ]
+            
+            # 统计词频
+            word_counts = Counter(filtered_words)
+            
+            # 返回前N个关键词
+            keywords = []
+            for word, count in word_counts.most_common(top_n):
+                keywords.append({
+                    'word': word,
+                    'count': count,
+                    'frequency': count / len(filtered_words) if filtered_words else 0
+                })
+            
+            return keywords
+        except Exception as e:
+            current_app.logger.warning(f"关键词提取失败: {str(e)}")
+            return []
     
     def _analyze_sentiment(self, content: str) -> Dict:
         """分析情感倾向（简化版）"""
