@@ -40,8 +40,15 @@ def configure_app(app):
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
     app.config['DEBUG'] = os.getenv('DEBUG', 'False').lower() == 'true'
     
-    # Obsidian文档路径
-    app.config['OBSIDIAN_VAULT_PATH'] = os.getenv('OBSIDIAN_VAULT_PATH', './docs')
+    # 从ConfigService读取Obsidian文档路径
+    try:
+        from app.services.config_service import ConfigService
+        config_service = ConfigService()
+        obsidian_path = config_service.get_config().get('obsidian_vault_path', './docs')
+        app.config['OBSIDIAN_VAULT_PATH'] = obsidian_path
+    except Exception as e:
+        app.logger.warning(f"无法从ConfigService读取配置，使用默认路径: {e}")
+        app.config['OBSIDIAN_VAULT_PATH'] = os.getenv('OBSIDIAN_VAULT_PATH', './docs')
     
     # 分析服务配置
     app.config['ANALYSIS_SERVICE_URL'] = os.getenv('ANALYSIS_SERVICE_URL', 'http://localhost:8001')

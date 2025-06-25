@@ -14,11 +14,25 @@ class DocumentService:
     """文档服务类"""
     
     def __init__(self):
-        self.vault_path = current_app.config.get('OBSIDIAN_VAULT_PATH', './docs')
+        self._update_vault_path()
         self.md_extensions = ['.md', '.markdown']
+        
+    def _update_vault_path(self):
+        """更新文档库路径"""
+        try:
+            from app.services.config_service import ConfigService
+            config_service = ConfigService()
+            config = config_service.get_config()
+            self.vault_path = config.get('obsidian_vault_path', './docs')
+        except Exception as e:
+            current_app.logger.warning(f"无法从ConfigService读取配置，使用默认路径: {e}")
+            self.vault_path = current_app.config.get('OBSIDIAN_VAULT_PATH', './docs')
         
     def get_all_documents(self) -> List[Dict]:
         """获取所有文档"""
+        # 更新文档库路径
+        self._update_vault_path()
+        
         documents = []
         
         if not os.path.exists(self.vault_path):
@@ -47,6 +61,9 @@ class DocumentService:
     
     def get_document(self, doc_path: str) -> Optional[Dict]:
         """获取单个文档"""
+        # 更新文档库路径
+        self._update_vault_path()
+        
         full_path = os.path.join(self.vault_path, doc_path)
         
         if not os.path.exists(full_path):
