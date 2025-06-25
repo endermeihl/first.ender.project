@@ -73,25 +73,87 @@ body {
 }
 
 .document-content code {
-    background-color: #f8f9fa;
-    color: #e83e8c;
+    background-color: #f1f3f4;
+    color: #d73a49;
     padding: 0.2rem 0.4rem;
-    border-radius: 3px;
+    border-radius: 4px;
     font-size: 0.9em;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    border: 1px solid #e1e4e8;
 }
 
 .document-content pre {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 5px;
+    background-color: #f6f8fa;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
     padding: 1rem;
     overflow-x: auto;
+    margin: 1rem 0;
+    position: relative;
+}
+
+.document-content pre::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #007bff, #28a745, #ffc107, #dc3545);
+    border-radius: 6px 6px 0 0;
 }
 
 .document-content pre code {
     background: none;
-    color: inherit;
+    color: #24292e;
     padding: 0;
+    border: none;
+    font-size: 0.9em;
+    line-height: 1.5;
+    white-space: pre;
+    word-wrap: normal;
+}
+
+/* 语法高亮支持 */
+.document-content .highlight {
+    background-color: #f6f8fa;
+    border-radius: 6px;
+    padding: 1rem;
+    margin: 1rem 0;
+    overflow-x: auto;
+}
+
+.document-content .highlight pre {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* 行内代码样式 */
+.document-content :not(pre) > code {
+    background-color: #f1f3f4;
+    color: #d73a49;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.85em;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+/* 代码块语言标识 */
+.document-content pre[class*="language-"]::before,
+.document-content pre[data-lang]::before {
+    content: attr(data-lang);
+    position: absolute;
+    top: 0;
+    right: 1rem;
+    background: #e1e4e8;
+    color: #586069;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.75em;
+    border-radius: 0 0 3px 3px;
+    text-transform: uppercase;
+    font-weight: 600;
 }
 
 .document-content blockquote {

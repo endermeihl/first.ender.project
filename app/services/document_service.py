@@ -112,8 +112,26 @@ class DocumentService:
             # 转换Markdown为HTML
             html_content = markdown.markdown(
                 post.content,
-                extensions=['fenced_code', 'tables', 'toc', 'codehilite']
+                extensions=[
+                    'fenced_code',
+                    'tables', 
+                    'toc',
+                    'codehilite',
+                    'nl2br',
+                    'sane_lists'
+                ],
+                extension_configs={
+                    'codehilite': {
+                        'css_class': 'highlight',
+                        'use_pygments': True,
+                        'noclasses': True,
+                        'linenums': False
+                    }
+                }
             )
+            
+            # 后处理HTML，改进代码块显示
+            html_content = self._post_process_html(html_content)
             
             # 提取链接
             links = self._extract_links(post.content)
@@ -185,4 +203,76 @@ class DocumentService:
             'total_size': total_size,
             'tag_counts': tag_counts,
             'monthly_stats': monthly_stats
-        } 
+        }
+    
+    def _post_process_html(self, html_content: str) -> str:
+        """后处理HTML内容，改进代码块显示"""
+        import re
+        
+        # 为代码块添加语言标识
+        def add_language_to_code(match):
+            code_block = match.group(0)
+            # 检查是否已经有语言标识
+            if 'class="highlight' in code_block:
+                return code_block
+            
+            # 尝试从代码内容推断语言
+            code_content = match.group(1)
+            language = self._detect_language(code_content)
+            
+            if language:
+                # 替换为带语言标识的代码块
+                return f'<pre class="highlight" data-lang="{language}"><code>{code_content}</code></pre>'
+            
+            return code_block
+        
+        # 处理代码块
+        html_content = re.sub(
+            r'<pre><code>(.*?)</code></pre>',
+            add_language_to_code,
+            html_content,
+            flags=re.DOTALL
+        )
+        
+        # 改进行内代码样式
+        html_content = re.sub(
+            r'<code>(.*?)</code>',
+            r'<code class="inline-code">\1</code>',
+            html_content
+        )
+        
+        return html_content
+    
+    def _detect_language(self, code_content: str) -> str:
+        """检测代码语言"""
+        # 简单的语言检测规则
+        code_lower = code_content.lower()
+        
+        if any(keyword in code_lower for keyword in ['def ', 'import ', 'from ', 'class ', 'print(']):
+            return 'python'
+        elif any(keyword in code_lower for keyword in ['function', 'var ', 'let ', 'const ', 'console.log']):
+            return 'javascript'
+        elif any(keyword in code_lower for keyword in ['<?php', 'echo ', '$', 'function ']):
+            return 'php'
+        elif any(keyword in code_lower for keyword in ['public class', 'public static', 'System.out']):
+            return 'java'
+        elif any(keyword in code_lower for keyword in ['#include', 'int main', 'printf']):
+            return 'c'
+        elif any(keyword in code_lower for keyword in ['fn ', 'let ', 'println!', 'use ']):
+            return 'rust'
+        elif any(keyword in code_lower for keyword in ['package ', 'import ', 'func ']):
+            return 'go'
+        elif any(keyword in code_lower for keyword in ['<html', '<div', '<script']):
+            return 'html'
+        elif any(keyword in code_lower for keyword in ['color:', 'background:', 'margin:', 'padding:']):
+            return 'css'
+        elif any(keyword in code_lower for keyword in ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'FROM']):
+            return 'sql'
+        elif any(keyword in code_lower for keyword in ['docker', 'FROM', 'RUN', 'COPY']):
+            return 'dockerfile'
+        elif any(keyword in code_lower for keyword in ['version:', 'services:', 'image:']):
+            return 'yaml'
+        elif any(keyword in code_lower for keyword in ['{', '}', '"name"', '"version"']):
+            return 'json'
+        
+        return 'text' 

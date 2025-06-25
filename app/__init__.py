@@ -14,8 +14,10 @@ def create_app(config_name=None):
     # 加载环境变量
     load_dotenv()
     
-    # 创建应用实例
-    app = Flask(__name__)
+    # 创建应用实例，明确指定静态文件路径
+    app = Flask(__name__, 
+                static_folder='../static',
+                static_url_path='/static')
     
     # 配置应用
     configure_app(app)

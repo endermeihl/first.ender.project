@@ -9,4 +9,5 @@ nltk==3.8.1
 textstat==0.7.3
 jieba==0.42.1
 python-dotenv==1.0.0
-gunicorn==21.2.0 
+gunicorn==21.2.0
+Pygments==2.17.2 
