@@ -22,8 +22,7 @@ class DocumentService:
         try:
             from app.services.config_service import ConfigService
             config_service = ConfigService()
-            config = config_service.get_config()
-            self.vault_path = config.get('obsidian_vault_path', './docs')
+            self.vault_path = config_service.get('obsidian_vault_path', './docs')
         except Exception as e:
             current_app.logger.warning(f"无法从ConfigService读取配置，使用默认路径: {e}")
             self.vault_path = current_app.config.get('OBSIDIAN_VAULT_PATH', './docs')

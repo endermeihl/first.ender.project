@@ -44,7 +44,7 @@ def configure_app(app):
     try:
         from app.services.config_service import ConfigService
         config_service = ConfigService()
-        obsidian_path = config_service.get_config().get('obsidian_vault_path', './docs')
+        obsidian_path = config_service.get('obsidian_vault_path', './docs')
         app.config['OBSIDIAN_VAULT_PATH'] = obsidian_path
     except Exception as e:
         app.logger.warning(f"无法从ConfigService读取配置，使用默认路径: {e}")
