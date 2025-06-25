@@ -65,9 +65,33 @@ def register_blueprints(app):
     
     from app.routes.main import main_bp
     from app.routes.api import api_bp
+    from app.routes.setup import setup_bp
     
     app.register_blueprint(main_bp)
     app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(setup_bp)
+    
+    # 初始化监控服务
+    init_monitor_service(app)
+
+def init_monitor_service(app):
+    """初始化监控服务"""
+    try:
+        from app.services.config_service import ConfigService
+        from app.services.monitor_service import MonitorService
+        
+        config_service = ConfigService()
+        monitor_service = MonitorService()
+        monitor_service.initialize(config_service)
+        
+        # 将服务实例存储到应用上下文中
+        app.config_service = config_service
+        app.monitor_service = monitor_service
+        
+        app.logger.info('监控服务初始化完成')
+        
+    except Exception as e:
+        app.logger.error(f'监控服务初始化失败: {e}')
 
 def setup_logging(app):
     """配置日志"""

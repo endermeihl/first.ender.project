@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+
+{% block title %}系统设置 - Obsidian文档展示系统{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-cog"></i> 系统设置
+            </h1>
+        </div>
+    </div>
+
+    <!-- 文档库设置 -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-folder-open"></i> 文档库设置</h5>
+                </div>
+                <div class="card-body">
+                    <!-- 当前状态 -->
+                    <div class="alert alert-info" id="current-status">
+                        <h6>当前状态</h6>
+                        <p id="status-text">正在加载...</p>
+                    </div>
+
+                    <!-- 路径设置 -->
+                    <form id="vault-form">
+                        <div class="form-group">
+                            <label for="vault-path">Obsidian文档库路径</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="vault-path" 
+                                       placeholder="请输入Obsidian文档库的完整路径" 
+                                       value="{{ vault_info.vault_path }}">
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-secondary" id="validate-btn">
+                                        <i class="fas fa-check"></i> 验证
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">
+                                例如: C:\Users\用户名\Documents\Obsidian Vault 或 /home/用户名/obsidian-vault
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary" id="initialize-btn">
+                                <i class="fas fa-play"></i> 初始化文档库
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="refresh-btn">
+                                <i class="fas fa-sync"></i> 强制刷新
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- 验证结果 -->
+                    <div id="validation-result" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 系统状态 -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-line"></i> 系统状态</h5>
+                </div>
+                <div class="card-body">
+                    <div class="status-item">
+                        <strong>文档库路径:</strong>
+                        <span id="status-path">{{ vault_info.vault_path }}</span>
+                    </div>
+                    <div class="status-item">
+                        <strong>文档数量:</strong>
+                        <span id="status-count">{{ vault_info.total_files }}</span>
+                    </div>
+                    <div class="status-item">
+                        <strong>监控状态:</strong>
+                        <span id="status-monitor">
+                            {% if monitor_status.monitoring %}
+                                <span class="badge badge-success">运行中</span>
+                            {% else %}
+                                <span class="badge badge-warning">未运行</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="status-item">
+                        <strong>自动刷新:</strong>
+                        <span id="status-auto-refresh">
+                            {% if monitor_status.auto_refresh %}
+                                <span class="badge badge-success">启用</span>
+                            {% else %}
+                                <span class="badge badge-secondary">禁用</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快速操作 -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-tools"></i> 快速操作</h5>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-outline-primary btn-sm btn-block mb-2" onclick="location.href='/'">
+                        <i class="fas fa-home"></i> 返回首页
+                    </button>
+                    <button class="btn btn-outline-info btn-sm btn-block mb-2" onclick="location.href='/docs'">
+                        <i class="fas fa-list"></i> 查看文档
+                    </button>
+                    <button class="btn btn-outline-success btn-sm btn-block" onclick="location.href='/analysis'">
+                        <i class="fas fa-chart-bar"></i> 分析面板
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 高级设置 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-sliders-h"></i> 高级设置</h5>
+                </div>
+                <div class="card-body">
+                    <form id="advanced-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="auto-refresh">自动刷新</label>
+                                    <select class="form-control" id="auto-refresh">
+                                        <option value="true">启用</option>
+                                        <option value="false">禁用</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="refresh-interval">刷新间隔 (秒)</label>
+                                    <input type="number" class="form-control" id="refresh-interval" 
+                                           value="30" min="5" max="300">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="theme">主题</label>
+                                    <select class="form-control" id="theme">
+                                        <option value="light">浅色主题</option>
+                                        <option value="dark">深色主题</option>
+                                        <option value="auto">自动</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="language">语言</label>
+                                    <select class="form-control" id="language">
+                                        <option value="zh-CN">中文</option>
+                                        <option value="en-US">English</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 保存设置
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 加载提示 -->
+<div class="loading-overlay" id="loading-overlay" style="display: none;">
+    <div class="loading-content">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">加载中...</span>
+        </div>
+        <p class="mt-2">正在处理，请稍候...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    console.log('设置页面加载完成');
+    
+    // 加载当前状态
+    loadStatus();
+    
+    // 验证路径
+    $('#validate-btn').click(function() {
+        console.log('点击验证按钮');
+        validatePath();
+    });
+    
+    // 初始化文档库
+    $('#vault-form').submit(function(e) {
+        e.preventDefault();
+        console.log('提交初始化表单');
+        initializeVault();
+    });
+    
+    // 强制刷新
+    $('#refresh-btn').click(function() {
+        console.log('点击强制刷新按钮');
+        forceRefresh();
+    });
+    
+    // 高级设置
+    $('#advanced-form').submit(function(e) {
+        e.preventDefault();
+        console.log('提交高级设置表单');
+        saveAdvancedSettings();
+    });
+    
+    // 加载高级设置
+    loadAdvancedSettings();
+});
+
+function showLoading() {
+    console.log('显示加载状态');
+    $('#loading-overlay').show();
+}
+
+function hideLoading() {
+    console.log('隐藏加载状态');
+    $('#loading-overlay').hide();
+}
+
+function showAlert(message, type = 'info') {
+    console.log('显示提示:', message, type);
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `;
+    $('#validation-result').html(alertHtml).show();
+}
+
+function loadStatus() {
+    console.log('加载状态信息');
+    $.get('/api/setup/status')
+        .done(function(data) {
+            console.log('状态数据:', data);
+            updateStatusDisplay(data);
+        })
+        .fail(function(xhr, status, error) {
+            console.error('加载状态失败:', status, error);
+            $('#status-text').text('加载状态失败: ' + error);
+        });
+}
+
+function updateStatusDisplay(data) {
+    const vault = data.vault_info;
+    const monitor = data.monitor_status;
+    
+    $('#status-path').text(vault.vault_path);
+    $('#status-count').text(vault.total_files);
+    
+    const monitorStatus = monitor.monitoring ? 
+        '<span class="badge badge-success">运行中</span>' : 
+        '<span class="badge badge-warning">未运行</span>';
+    $('#status-monitor').html(monitorStatus);
+    
+    const autoRefreshStatus = monitor.auto_refresh ? 
+        '<span class="badge badge-success">启用</span>' : 
+        '<span class="badge badge-secondary">禁用</span>';
+    $('#status-auto-refresh').html(autoRefreshStatus);
+    
+    $('#status-text').text(
+        vault.exists ? 
+        `文档库已配置，包含 ${vault.total_files} 个文档` : 
+        '文档库未配置或路径无效'
+    );
+}
+
+function validatePath() {
+    const path = $('#vault-path').val().trim();
+    console.log('验证路径:', path);
+    
+    if (!path) {
+        showAlert('请输入路径', 'warning');
+        return;
+    }
+    
+    showLoading();
+    
+    $.ajax({
+        url: '/api/setup/validate-path',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ path: path })
+    })
+    .done(function(data) {
+        console.log('验证结果:', data);
+        hideLoading();
+        if (data.valid) {
+            showAlert(`✅ ${data.message}`, 'success');
+        } else {
+            showAlert(`❌ ${data.message}`, 'danger');
+        }
+    })
+    .fail(function(xhr, status, error) {
+        console.error('验证失败:', status, error);
+        console.error('响应内容:', xhr.responseText);
+        hideLoading();
+        showAlert('验证失败: ' + error, 'danger');
+    });
+}
+
+function initializeVault() {
+    const path = $('#vault-path').val().trim();
+    console.log('初始化文档库:', path);
+    
+    if (!path) {
+        showAlert('请输入文档库路径', 'warning');
+        return;
+    }
+    
+    showLoading();
+    
+    $.ajax({
+        url: '/api/setup/initialize',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ vault_path: path })
+    })
+    .done(function(data) {
+        console.log('初始化结果:', data);
+        hideLoading();
+        if (data.success) {
+            showAlert(`✅ ${data.message}`, 'success');
+            loadStatus();
+        } else {
+            showAlert(`❌ ${data.message}`, 'danger');
+        }
+    })
+    .fail(function(xhr, status, error) {
+        console.error('初始化失败:', status, error);
+        console.error('响应内容:', xhr.responseText);
+        hideLoading();
+        showAlert('初始化失败: ' + error, 'danger');
+    });
+}
+
+function forceRefresh() {
+    console.log('强制刷新');
+    showLoading();
+    
+    $.ajax({
+        url: '/api/setup/refresh',
+        method: 'POST'
+    })
+    .done(function(data) {
+        console.log('刷新结果:', data);
+        hideLoading();
+        if (data.success) {
+            showAlert(`✅ ${data.message}`, 'success');
+            loadStatus();
+        } else {
+            showAlert(`❌ ${data.message}`, 'danger');
+        }
+    })
+    .fail(function(xhr, status, error) {
+        console.error('刷新失败:', status, error);
+        hideLoading();
+        showAlert('刷新失败: ' + error, 'danger');
+    });
+}
+
+function loadAdvancedSettings() {
+    console.log('加载高级设置');
+    $.get('/api/setup/config')
+        .done(function(data) {
+            console.log('高级设置数据:', data);
+            $('#auto-refresh').val(data.auto_refresh.toString());
+            $('#refresh-interval').val(data.refresh_interval);
+            $('#theme').val(data.theme);
+            $('#language').val(data.language);
+        })
+        .fail(function(xhr, status, error) {
+            console.error('加载高级设置失败:', status, error);
+        });
+}
+
+function saveAdvancedSettings() {
+    const settings = {
+        auto_refresh: $('#auto-refresh').val() === 'true',
+        refresh_interval: parseInt($('#refresh-interval').val()),
+        theme: $('#theme').val(),
+        language: $('#language').val()
+    };
+    
+    console.log('保存高级设置:', settings);
+    showLoading();
+    
+    $.ajax({
+        url: '/api/setup/config',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(settings)
+    })
+    .done(function(data) {
+        console.log('保存结果:', data);
+        hideLoading();
+        if (data.success) {
+            showAlert(`✅ ${data.message}`, 'success');
+            loadStatus();
+        } else {
+            showAlert(`❌ ${data.message}`, 'danger');
+        }
+    })
+    .fail(function(xhr, status, error) {
+        console.error('保存设置失败:', status, error);
+        hideLoading();
+        showAlert('保存设置失败: ' + error, 'danger');
+    });
+}
+</script>
+{% endblock %} 
