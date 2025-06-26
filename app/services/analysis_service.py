@@ -58,6 +58,21 @@ class AnalysisService:
         total_words = sum(doc.get('word_count', 0) for doc in documents)
         total_size = sum(doc.get('size', 0) for doc in documents)
         
+        # 计算平均可读性
+        readability_scores = []
+        for doc in documents:
+            content = doc.get('content', '')
+            if content:
+                try:
+                    readability = self._analyze_readability(content)
+                    if readability and 'flesch_reading_ease' in readability:
+                        readability_scores.append(readability['flesch_reading_ease'])
+                except Exception as e:
+                    current_app.logger.warning(f"计算文档可读性失败: {e}")
+                    continue
+        
+        average_readability = round(sum(readability_scores) / len(readability_scores), 2) if readability_scores else 0
+        
         # 标签统计
         all_tags = []
         for doc in documents:
@@ -80,6 +95,7 @@ class AnalysisService:
             'total_words': total_words,
             'total_size': total_size,
             'average_words_per_doc': round(total_words / total_docs, 2) if total_docs > 0 else 0,
+            'average_readability': average_readability,
             'top_tags': dict(tag_counts.most_common(10)),
             'monthly_stats': monthly_stats,
             'document_types': doc_types
@@ -214,7 +230,13 @@ class AnalysisService:
     def _generate_summary(self, content: str, max_length: int = 200) -> str:
         """生成文档摘要"""
         # 简单的摘要生成：选择前几句话
-        sentences = nltk.sent_tokenize(content)
+        if nltk_available:
+            try:
+                sentences = nltk.sent_tokenize(content)
+            except:
+                sentences = self._simple_sentence_split(content)
+        else:
+            sentences = self._simple_sentence_split(content)
         
         if not sentences:
             return ""
